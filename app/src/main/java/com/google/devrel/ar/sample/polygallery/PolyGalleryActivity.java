@@ -19,6 +19,7 @@ package com.google.devrel.ar.sample.polygallery;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -64,10 +65,28 @@ public class PolyGalleryActivity extends AppCompatActivity {
   private Handler mBackgroundThreadHandler;
   private Fragment fragment;
 
+  private PolyApi polyApi;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    // Load the Poly api key.  You need to change this to match your key from the API console.
+    String apiKey = getString(R.string.poly_api_key);
+    // This test is just for sample purposes, in an actual application, you should know the
+    // API key is set.
+    if("YOUR_POLY_API_KEY_HERE".equals(apiKey) || apiKey.isEmpty()) {
+      String msg = "You need to configure an API key for the Poly API before running this sample";
+      new AlertDialog.Builder(this).setTitle("Error").
+              setMessage(msg)
+              .setOnCancelListener(dialog -> finish())
+              .create().show();
+      Log.e(TAG, msg);
+      return;
+    }
+
+    polyApi = new PolyApi(apiKey);
 
     gallery = findViewById(R.id.recyclerView);
     intializeGallery(gallery);
@@ -239,7 +258,7 @@ public class PolyGalleryActivity extends AppCompatActivity {
    * @param keywords - the keywords to search for.
    */
   private void doPolySearch(String keywords) {
-    PolyApi.ListAssets(keywords, false, "", mBackgroundThreadHandler,
+    polyApi.ListAssets(keywords, false, "", mBackgroundThreadHandler,
             new AsyncHttpRequest.CompletionListener() {
               @Override
               public void onHttpRequestSuccess(byte[] responseBody) {
